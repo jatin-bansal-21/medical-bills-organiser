@@ -10,32 +10,49 @@ A Python-based CLI tool for macOS that ingests a folder of disorganized medical 
 - 📑 **PDF merging**: Combines all documents into a single organized PDF
 - ✅ **User confirmation**: Review the AI's grouping before merging
 
-## Prerequisites
+## Quick Setup
 
-### System Dependencies
+The easiest way to get started is to run the setup script:
 
 ```bash
-# Install poppler (required for PDF to image conversion)
-brew install poppler
+# Clone the repository
+git clone https://github.com/your-username/medical-bills-organiser.git
+cd medical-bills-organiser
+
+# Run the setup script (installs all dependencies automatically)
+chmod +x setup.sh
+./setup.sh
 ```
 
-### Environment Setup
+The setup script will automatically:
+- Install pipx (via Homebrew on macOS)
+- Install Poetry (via pipx)
+- Install poppler (via Homebrew on macOS)
+- Install Python dependencies
+- Create `.env` from template
 
-1. Clone this repository
-2. Copy the environment template and add your API key:
+## Manual Installation
+
+If you prefer to install dependencies manually:
+
+### 1. System Dependencies
 
 ```bash
-cp .env.example .env
-# Edit .env and add your OpenAI API key
+# macOS
+brew install pipx poppler
+pipx install poetry
 ```
 
-## Installation
+### 2. Project Setup
 
 ```bash
-# Install dependencies and create virtual environment
+# Install Python dependencies
 poetry install
 
-# Activate the virtual environment
+# Copy environment template
+cp .env.example .env
+
+# Activate virtual environment
 poetry shell
 ```
 

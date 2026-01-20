@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # Setup script for Intelligent Medical File Sorter
-# This script sets up the development environment
+# This script sets up the development environment automatically
 
 set -e
 
 echo "🔧 Setting up Medical File Sorter..."
 echo ""
+
+# Detect OS
+OS="$(uname -s)"
 
 # Check for Python
 if ! command -v python3 &> /dev/null; then
@@ -17,26 +20,72 @@ fi
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "✓ Found Python $PYTHON_VERSION"
 
-# Check for Poetry
-if ! command -v poetry &> /dev/null; then
-    echo "❌ Poetry is not installed."
-    echo "   Install it with: curl -sSL https://install.python-poetry.org | python3 -"
-    exit 1
+# Check for Homebrew (macOS only)
+if [[ "$OS" == "Darwin" ]]; then
+    if ! command -v brew &> /dev/null; then
+        echo ""
+        echo "⚠️  Homebrew is not installed."
+        echo "   Install it from: https://brew.sh"
+        echo ""
+        read -p "Continue without Homebrew? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    else
+        echo "✓ Found Homebrew"
+    fi
 fi
 
-POETRY_VERSION=$(poetry --version)
-echo "✓ Found $POETRY_VERSION"
+# Check for pipx, install if missing (macOS)
+if ! command -v pipx &> /dev/null; then
+    echo ""
+    echo "📦 pipx is not installed."
+    if [[ "$OS" == "Darwin" ]] && command -v brew &> /dev/null; then
+        echo "   Installing pipx via Homebrew..."
+        brew install pipx
+        pipx ensurepath
+        echo "✓ Installed pipx"
+    else
+        echo "❌ Please install pipx manually:"
+        echo "   macOS: brew install pipx"
+        echo "   Linux: python3 -m pip install --user pipx"
+        exit 1
+    fi
+else
+    echo "✓ Found pipx"
+fi
+
+# Check for Poetry, install if missing
+if ! command -v poetry &> /dev/null; then
+    echo ""
+    echo "📦 Poetry is not installed."
+    echo "   Installing Poetry via pipx..."
+    pipx install poetry
+    echo "✓ Installed Poetry"
+else
+    POETRY_VERSION=$(poetry --version)
+    echo "✓ Found $POETRY_VERSION"
+fi
 
 # Check for poppler (required for pdf2image)
 if ! command -v pdftoppm &> /dev/null; then
     echo ""
-    echo "⚠️  poppler is not installed (required for PDF processing)."
-    echo "   Install it with: brew install poppler"
-    echo ""
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
+    echo "📦 poppler is not installed (required for PDF processing)."
+    if [[ "$OS" == "Darwin" ]] && command -v brew &> /dev/null; then
+        echo "   Installing poppler via Homebrew..."
+        brew install poppler
+        echo "✓ Installed poppler"
+    else
+        echo "⚠️  Please install poppler manually:"
+        echo "   macOS: brew install poppler"
+        echo "   Linux: sudo apt-get install poppler-utils"
+        echo ""
+        read -p "Continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
 else
     echo "✓ Found poppler"
@@ -57,14 +106,14 @@ if [ ! -f .env ]; then
     echo ""
     echo "📝 Creating .env file from template..."
     cp .env.example .env
-    echo "⚠️  Please edit .env and add your OPENAI_API_KEY"
+    echo "⚠️  Please edit .env and configure your LLM backend"
 fi
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Edit .env and add your OpenAI API key"
+echo "  1. Edit .env and configure your LLM backend (OpenRouter, OpenAI, or LM Studio)"
 echo "  2. Activate the virtual environment: poetry shell"
 echo "  3. Run the tool: medical-sorter /path/to/documents"
 echo ""
